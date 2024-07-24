@@ -15,16 +15,21 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity //for role base authentication
+@EnableMethodSecurity // for role base authentication
 public class SecurityConfig {
 
     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests((requests) -> requests.anyRequest().authenticated());
+        http.authorizeHttpRequests((requests) -> requests.requestMatchers("/h2-console/**").permitAll()
+                .anyRequest().authenticated());
         // for stateless session
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         // http.formLogin(withDefaults());
         http.httpBasic(withDefaults());
+        http.headers(headers -> headers.frameOptions((frameOptionsConfig) -> {
+            frameOptionsConfig.sameOrigin();
+        }));
+        http.csrf(csrf -> csrf.disable());
         return http.build();
     }
 
@@ -32,7 +37,7 @@ public class SecurityConfig {
     @Bean
     public UserDetailsService userDetailsService() {
         UserDetails user1 = User.withUsername("user1").password("{noop}password1").roles("USER").build();
-        UserDetails admin = User.withUsername("admin").password("{noop}admin").roles("ADMIN").build();
+        UserDetails admin = User.withUsername("user2").password("{noop}password1").roles("USER").build();
         return new InMemoryUserDetailsManager(user1, admin);
     }
 }
